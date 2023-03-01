@@ -1,37 +1,98 @@
+import face_recognition
 
-import cv2
-import mediapipe as mp
-import time
+image = face_recognition.load_image_file('Image')
+face_locations = face_recognition.face_locations(image)
 
+# Array of coords of each face
+print(face_locations)
 
-cap = cv2.VideoCapture(0)
-cap.set(3,640)
-cap.set(4,480)
-pTime = 0
+print(f'There are {len(face_locations)} people in this image')
 
-mpDraw = mp.solutions.drawing_utils
-mpFaceMesh = mp.solutions.face_mesh
-faceMesh = mpFaceMesh.FaceMesh(max_num_faces=2)
-drawSpec = mpDraw.DrawingSpec(thickness=1, circle_radius=1)
-while True:
-   success, img = cap.read()
-   imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-   results = faceMesh.process(imgRGB)
-   if results.multi_face_landmarks:
-       for faceLms in results.multi_face_landmarks:
-           mpDraw.draw_landmarks(img,faceLms,mpFaceMesh.FACEMESH_CONTOURS,
-                                 drawSpec,drawSpec)
-           for id,lm in enumerate(faceLms.landmark):
-               # print(lm)
-               ih, iw, ic = img.shape
-               x,y = int(lm.x*iw), int(lm.y*ih)
-               print(id,x,y)
+import face_recognition
 
-   cTime = time.time()
-   fps = 1/(cTime-pTime)
-   pTime = cTime
-   cv2.putText(img,f'FPS: {int(fps)}', (20,70),cv2.FONT_HERSHEY_PLAIN,
-               3, (0, 255, 0), 3)
-   cv2.imshow("Video", img)
-   if cv2.waitKey(1) & 0xFF ==ord('q'):
-       break
+image_of_bill = face_recognition.load_image_file('Image')
+bill_face_encoding = face_recognition.face_encodings(image)[0]
+
+unknown_image = face_recognition.load_image_file('Image')
+unknown_face_encoding = face_recognition.face_encodings(unknown_image)[0]
+
+# Compare Faces
+results = face_recognition.compare_faces([image_face_encoding], unknown_face_encoding)
+
+if results[0]:
+    print('This is Image_Person_Name')
+else: 
+    print('This is NOT Image_Person_Name')
+    
+from PIL import Image
+import face_recognition
+
+image = face_recognition.load_image_file('team1.jpg')
+face_locations = face_recognition.face_locations(image)
+
+for face_location in face_locations:
+    top, right, bottom, left = face_location
+    
+    face_image = image[top:bottom, left: right]
+    pil_image = Image.fromarray(face_image)
+#     pil_image.show()
+    pil_image.save(f'{top}.jpg')
+    
+
+import face_recognition
+from PIL import Image, ImageDraw
+
+image_of_bill = face_recognition.load_image_file('Image')
+bill_face_encoding = face_recognition.face_encodings(image_of_person1)[0]
+
+image_of_elon = face_recognition.load_image_file('Image2')
+elon_face_encoding = face_recognition.face_encodings(image_of_person2)[0]
+
+# create array of encodings and names
+known_face_encodings = [
+    image1_face_encoding,
+    image2_face_encoding
+]
+
+known_face_names = [
+    "Person1",
+    "Person2"
+]
+
+# Load Test Image to Find Faces in
+test_image = face_recognition.load_image_file('group1')
+
+# Find faces in test image
+face_locations = face_recognition.face_locations(test_image)
+face_encodings = face_recognition.face_encodings(test_image, face_locations)
+
+# Convert to PIL format
+pil_image = Image.fromarray(test_image)
+
+# Create a ImageDraw instance
+draw = ImageDraw.Draw(pil_image)
+
+# Loop through faces in test image
+for(top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
+    matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+    
+    name = "Unknown Person"
+    
+    # If match
+    if True in matches:
+        first_match_index = matches.index(True)
+        name = known_face_names[first_match_index]
+        
+    # Draw Box
+    draw.rectangle(((left, top), (right, bottom)), outline=(0,0,0))
+    
+    # Draw label
+    text_width, text_height = draw.textsize(name)
+    draw.rectangle(((left, bottom - text_height - 10), (right, bottom)), fill=(0,0,0),
+    outline=(0,0,0))
+    draw.text((left + 6, bottom - text_height - 5), name, fill=(255,255,255,255))
+    
+del draw
+
+# Display image
+pil_image.show()
